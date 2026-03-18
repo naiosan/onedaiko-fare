@@ -1,15 +1,20 @@
-var CACHE = 'fare-v1';
-var FILES = ['/', '/index.html', '/icon-180.png', '/icon-512.png'];
+var CACHE = 'fare-v2';
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open(CACHE).then(function(cache) { return cache.addAll(FILES); })
+    caches.open(CACHE).then(function(cache) {
+      return cache.addAll(['./', './index.html', './manifest.json']);
+    })
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', function(e) {
-  e.waitUntil(self.clients.claim());
+  e.waitUntil(
+    caches.keys().then(function(names) {
+      return Promise.all(names.filter(function(n) { return n !== CACHE; }).map(function(n) { return caches.delete(n); }));
+    }).then(function() { return self.clients.claim(); })
+  );
 });
 
 self.addEventListener('fetch', function(e) {
@@ -20,6 +25,8 @@ self.addEventListener('fetch', function(e) {
         caches.open(CACHE).then(function(c) { c.put(e.request, clone); });
         return resp;
       });
+    }).catch(function() {
+      return caches.match('./index.html');
     })
   );
 });
