@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="料金計算">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>料金計算 - ワンダイコー</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  background: #f8fafc; color: #1e293b;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px; flex-shrink: 0;
+}
+.top-bar h1 { font-size: 20px; color: #0369a1; }
+.top-bar .badge {
+  background: #22c55e; color: #fff; font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+}
+.main {
+  flex: 1; display: flex; gap: 20px; padding: 10px 24px 20px;
+  min-height: 0;
+}
+.input-panel {
+  flex: 1; display: flex; flex-direction: column; gap: 16px;
+}
+.km-section {
+  background: #e0f2fe; border-radius: 20px; padding: 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.km-label { font-size: 16px; color: #64748b; }
+.km-display {
+  font-size: 72px; font-weight: 800; color: #0369a1;
+  min-height: 86px; line-height: 1;
+}
+.km-display span { font-size: 32px; color: #94a3b8; font-weight: 400; }
+.numpad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  flex: 1;
+}
+.num-btn {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+  color: #1e293b; font-size: 32px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  min-height: 64px;
+  transition: background 0.1s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.num-btn:active { background: #e2e8f0; }
+.num-btn.del { color: #ef4444; font-size: 24px; }
+.result-panel {
+  flex: 1; display: flex; flex-direction: column; gap: 16px;
+}
+.pickup-section {
+  background: #fff; border-radius: 20px; padding: 20px;
+  flex-shrink: 0; border: 1px solid #e2e8f0;
+}
+.pickup-title { font-size: 14px; color: #64748b; margin-bottom: 12px; }
+.pickup-grid { display: flex; gap: 10px; }
+.p-btn {
+  flex: 1; background: #f1f5f9; border: 2px solid transparent; border-radius: 14px;
+  color: #1e293b; padding: 14px 8px; font-size: 15px; cursor: pointer;
+  text-align: center; transition: all 0.15s;
+}
+.p-btn .fee { font-size: 22px; font-weight: 700; display: block; margin-top: 4px; color: #475569; }
+.p-btn.active { background: #e0f2fe; border-color: #0369a1; }
+.p-btn.active .fee { color: #0369a1; }
+.fare-result {
+  background: #fff; border-radius: 20px; padding: 28px;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.fare-label { font-size: 18px; color: #64748b; }
+.fare-amount {
+  font-size: 96px; font-weight: 900; color: #dc2626;
+  line-height: 1; letter-spacing: -2px;
+}
+.fare-breakdown {
+  font-size: 16px; color: #64748b; margin-top: 8px; text-align: center; line-height: 1.8;
+}
+.pickup-detail {
+  background: #f8fafc; border-radius: 20px; padding: 16px 20px;
+  flex-shrink: 0; border: 1px solid #e2e8f0;
+}
+.detail-row {
+  display: flex; justify-content: space-between; padding: 6px 0;
+  font-size: 14px; color: #64748b;
+}
+.detail-row .val { color: #1e293b; font-weight: 600; }
+.detail-note { font-size: 11px; color: #94a3b8; margin-top: 6px; line-height: 1.5; }
+@media (max-width: 800px) and (orientation: portrait) {
+  .main { flex-direction: column; padding: 8px 16px 16px; }
+  .km-section { padding: 16px; }
+  .km-display { font-size: 52px; min-height: 62px; }
+  .km-display span { font-size: 24px; }
+  .num-btn { font-size: 26px; min-height: 52px; }
+  .fare-amount { font-size: 64px; }
+  .fare-result { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🚴 ワンダイコー 料金計算</h1>
+  <div class="badge">オフラインOK</div>
+</div>
+
+<div class="main">
+  <div class="input-panel">
+    <div class="km-section">
+      <div class="km-label">走行距離</div>
+      <div class="km-display" id="kmDisplay">0 <span>km</span></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="numPress('1')">1</button>
+      <button class="num-btn" onclick="numPress('2')">2</button>
+      <button class="num-btn" onclick="numPress('3')">3</button>
+      <button class="num-btn" onclick="numPress('4')">4</button>
+      <button class="num-btn" onclick="numPress('5')">5</button>
+      <button class="num-btn" onclick="numPress('6')">6</button>
+      <button class="num-btn" onclick="numPress('7')">7</button>
+      <button class="num-btn" onclick="numPress('8')">8</button>
+      <button class="num-btn" onclick="numPress('9')">9</button>
+      <button class="num-btn" onclick="numPress('.')">.</button>
+      <button class="num-btn" onclick="numPress('0')">0</button>
+      <button class="num-btn del" onclick="numDel()">⌫</button>
+    </div>
+  </div>
+
+  <div class="result-panel">
+    <div class="pickup-section">
+      <div class="pickup-title">迎車料金（お迎え場所）</div>
+      <div class="pickup-grid">
+        <button class="p-btn active" data-fee="0" onclick="setPickup(this)">
+          中心地<span class="fee">¥0</span>
+        </button>
+        <button class="p-btn" data-fee="500" onclick="setPickup(this)">
+          1.5km〜<span class="fee">+¥500</span>
+        </button>
+        <button class="p-btn" data-fee="1000" onclick="setPickup(this)">
+          3km〜<span class="fee">+¥1,000</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="fare-result">
+      <div class="fare-label">お客様請求額</div>
+      <div class="fare-amount" id="fareAmount">¥1,500</div>
+      <div class="fare-breakdown" id="fareBreakdown">基本料金 ¥1,500（3kmまで）</div>
+    </div>
+
+    <div class="pickup-detail">
+      <div class="detail-row">
+        <span>基本料金</span><span class="val">3kmまで ¥1,500</span>
+      </div>
+      <div class="detail-row">
+        <span>距離加算</span><span class="val">1kmごと +¥300</span>
+      </div>
+      <div class="detail-row">
+        <span>中心地エリア</span><span class="val">迎車無料</span>
+      </div>
+      <div class="detail-note">
+        中心地: 上通・下通・新市街・桜町・サクラマチ・中央区・中央街
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var BASE = 1500, BASE_KM = 3, PER_KM = 300;
+var pickupFee = 0;
+var kmStr = '';
+
+function numPress(ch) {
+  if (ch === '.' && kmStr.includes('.')) return;
+  if (ch === '.' && kmStr === '') { kmStr = '0'; }
+  if (kmStr.includes('.') && kmStr.split('.')[1].length >= 1) return;
+  if (kmStr.length >= 4) return;
+  kmStr += ch;
+  update();
+}
+
+function numDel() {
+  kmStr = kmStr.slice(0, -1);
+  update();
+}
+
+function setPickup(btn) {
+  document.querySelectorAll('.p-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  pickupFee = Number(btn.dataset.fee);
+  update();
+}
+
+function update() {
+  var km = parseFloat(kmStr) || 0;
+  document.getElementById('kmDisplay').innerHTML =
+    (kmStr || '0') + ' <span>km</span>';
+
+  var fare = BASE;
+  if (km > BASE_KM) {
+    fare += Math.ceil(km - BASE_KM) * PER_KM;
+  }
+  var total = fare + pickupFee;
+
+  document.getElementById('fareAmount').textContent = '¥' + total.toLocaleString();
+
+  var parts = [];
+  parts.push('基本料金 ¥1,500（3kmまで）');
+  if (km > BASE_KM) {
+    var extra = Math.ceil(km - BASE_KM);
+    parts.push('距離加算 +¥' + (extra * PER_KM).toLocaleString() + '（' + extra + 'km × ¥300）');
+  }
+  if (pickupFee > 0) {
+    parts.push('迎車料金 +¥' + pickupFee.toLocaleString());
+  }
+  document.getElementById('fareBreakdown').innerHTML = parts.join('<br>');
+}
+
+// サービスワーカー登録（オフライン対応）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
