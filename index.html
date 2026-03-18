@@ -6,9 +6,46 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="料金計算">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0369a1">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-180.png">
 <title>料金計算 - ワンダイコー</title>
+<script>
+// アイコン動的生成（apple-touch-icon）
+(function(){
+  var c = document.createElement('canvas');
+  c.width = 180; c.height = 180;
+  var g = c.getContext('2d');
+  // 青背景
+  g.fillStyle = '#0369a1';
+  g.fillRect(0, 0, 180, 180);
+  // 白丸
+  g.beginPath();
+  g.arc(90, 72, 48, 0, Math.PI * 2);
+  g.fillStyle = '#ffffff';
+  g.fill();
+  // ¥マーク
+  g.fillStyle = '#0369a1';
+  g.font = 'bold 58px -apple-system, Helvetica, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText('¥', 90, 74);
+  // 下テキスト
+  g.fillStyle = '#ffffff';
+  g.font = 'bold 22px -apple-system, Helvetica, sans-serif';
+  g.fillText('料金計算', 90, 145);
+  // 適用
+  var link = document.createElement('link');
+  link.rel = 'apple-touch-icon';
+  link.href = c.toDataURL('image/png');
+  document.head.appendChild(link);
+  // favicon
+  var fav = document.createElement('link');
+  fav.rel = 'icon';
+  fav.href = c.toDataURL('image/png');
+  document.head.appendChild(fav);
+})();
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
@@ -18,6 +55,7 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none; user-select: none;
   display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .top-bar {
@@ -210,15 +248,12 @@ function update() {
   var km = parseFloat(kmStr) || 0;
   document.getElementById('kmDisplay').innerHTML =
     (kmStr || '0') + ' <span>km</span>';
-
   var fare = BASE;
   if (km > BASE_KM) {
     fare += Math.ceil(km - BASE_KM) * PER_KM;
   }
   var total = fare + pickupFee;
-
   document.getElementById('fareAmount').textContent = '¥' + total.toLocaleString();
-
   var parts = [];
   parts.push('基本料金 ¥1,500（3kmまで）');
   if (km > BASE_KM) {
@@ -233,7 +268,7 @@ function update() {
 
 // サービスワーカー登録（オフライン対応）
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register('sw.js').catch(function(){});
 }
 </script>
 </body>
